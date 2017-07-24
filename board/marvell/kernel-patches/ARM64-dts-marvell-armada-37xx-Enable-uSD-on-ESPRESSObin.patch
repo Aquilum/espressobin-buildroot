@@ -1,0 +1,77 @@
+From patchwork Thu Jul 20 23:50:36 2017
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: ARM64: dts: marvell: armada-37xx: Enable uSD on ESPRESSObin
+From: Marcin Wojtas <mw@semihalf.com>
+X-Patchwork-Id: 9855829
+Message-Id: <1500594636-19911-1-git-send-email-mw@semihalf.com>
+To: linux-kernel@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org
+Cc: thomas.petazzoni@free-electrons.com, andrew@lunn.ch, marc.zyngier@arm.com, 
+ jaz@semihalf.com, hannah@marvell.com, nadavh@marvell.com,
+ neta@marvell.com, 
+ gregory.clement@free-electrons.com, mark.rutland@arm.com,
+ mw@semihalf.com, zbodek@gmail.com
+Date: Fri, 21 Jul 2017 01:50:36 +0200
+
+The ESPRESSObin board exposes one of the SDHCI interfaces
+via J1 uSD slot. This patch enables it.
+
+Signed-off-by: Marcin Wojtas <mw@semihalf.com>
+Signed-off-by: Zbigniew Bodek <zbodek@gmail.com>
+---
+ .../boot/dts/marvell/armada-3720-espressobin.dts   | 26 ++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/marvell/armada-3720-espressobin.dts b/arch/arm64/boot/dts/marvell/armada-3720-espressobin.dts
+index b1af3f98..6d0caf1 100644
+--- a/arch/arm64/boot/dts/marvell/armada-3720-espressobin.dts
++++ b/arch/arm64/boot/dts/marvell/armada-3720-espressobin.dts
+@@ -45,6 +45,7 @@
+ 
+ /dts-v1/;
+ 
++#include <dt-bindings/gpio/gpio.h>
+ #include "armada-372x.dtsi"
+ 
+ / {
+@@ -59,6 +60,20 @@
+ 		device_type = "memory";
+ 		reg = <0x00000000 0x00000000 0x00000000 0x20000000>;
+ 	};
++
++	vcc_sd_reg1: regulator {
++		compatible = "regulator-gpio";
++		regulator-name = "vcc_sd1";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-boot-on;
++
++		gpios = <&gpionb 4 GPIO_ACTIVE_HIGH>;
++		gpios-states = <0>;
++		states = <1800000 0x1
++			  3300000 0x0>;
++		enable-active-high;
++	};
+ };
+ 
+ /* J9 */
+@@ -71,6 +86,17 @@
+ 	status = "okay";
+ };
+ 
++/* J1 */
++&sdhci1 {
++	wp-inverted;
++	bus-width = <4>;
++	cd-gpios = <&gpionb 3 GPIO_ACTIVE_LOW>;
++	no-1-8-v;
++	marvell,pad-type = "sd";
++	vqmmc-supply = <&vcc_sd_reg1>;
++	status = "okay";
++};
++
+ /* Exported on the micro USB connector J5 through an FTDI */
+ &uart0 {
+ 	status = "okay";
